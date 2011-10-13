@@ -34,13 +34,13 @@ start(Args) ->
 %% Another command-line entry function. Starts the editor with some
 %% modules loaded for debugging.
 debug() ->
-    lists:foreach(fun(Mod) -> i:ii(Mod) end, debug_modules()),
+    i:ii(debug_modules()),
     i:im(),
     sleep(1000),
     proc_lib:start_link(?MODULE, start, []).
 
 debug_modules() ->
-    [edit_display, edit_lib, ?EDIT_TERMINAL, edit_keymap, edit_buf,
+    [edit, edit_display, edit_lib, ?EDIT_TERMINAL, edit_keymap, edit_buf,
      edit_extended, edit_file, cord, edit_eval, edit_util, edit_text].
 
 %% ----------------------------------------------------------------------
@@ -81,8 +81,8 @@ init() ->
     loop(State2).
 
 init_io_traps() ->
-    {ok, Leader} = file_gl:start_link("/tmp/edit.out"),
-    group_leader(Leader, self()),
+    group_leader(whereis(standard_error), self()),
+    ok = error_logger:logfile({open, "/tmp/ermacs-errors.log"}),
     error_logger:tty(false).
 
 %% Setup initial buffers (scratch and minibuffer)

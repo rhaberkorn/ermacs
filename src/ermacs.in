@@ -2,10 +2,8 @@
 
 BASEDIR=%BASEDIR%
 
-SLANG_EBIN_DIR=${BASEDIR}/../slang/ebin
-
-erl -pa ${SLANG_EBIN_DIR} -pa ${BASEDIR}/ebin -pa ${BASEDIR}/mods/ebin \
-    -pa ${BASEDIR}/../msc/ebin -noshell -s edit start $*
+erl -pa ${BASEDIR}/ebin -pa ${BASEDIR}/mods/ebin \
+    -noshell -nouser -s edit start $* 2>/tmp/ermacs-misc.log
 
 # How do I get sh to run this in response to SIGINT?
 stty sane
