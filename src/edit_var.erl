@@ -4,18 +4,13 @@
 %%% variables).
 
 -module(edit_var).
+-export([start_link/0]).
+-export([lookup/1, lookup/2, set/2, add_to_list/2]).
 
 -behaviour(gen_server).
-
-%% External exports
--export([start_link/0]).
-
--export([lookup/1, lookup/2, set/2, permanent/2, add_to_list/2]).
-
-%% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3]).
 
--record(state, {ets, dets}).
+-define(TABLE, edit_mem_var).
 
 %%%----------------------------------------------------------------------
 %%% API
@@ -28,131 +23,47 @@ lookup(Name) ->
     lookup(Name, undefined).
 
 lookup(Name, Default) ->
-    gen_server:call(?MODULE, {lookup, Name, Default}).
+    case ets:lookup(?TABLE, Name) of
+        [{_, Value}] ->
+            Value;
+        [] ->
+            Default
+    end.
 
 set(Name, Value) ->
     gen_server:call(?MODULE, {set, Name, Value}).
 
-%% permanent(Name, true | false)
-permanent(Name, Flag) ->
-    gen_server:call(?MODULE, {permanent, Name, Flag}).
-
 add_to_list(Name, Value) ->
-    List = lookup(Name, []),
-    edit_var:set(Name, include(List, Value)).
-
-include([], Value)        -> [Value];
-include([Value|T], Value) -> [Value|T];
-include([H|T], Value)     -> [H|include(T, Value)].
+    gen_server:call(?MODULE, {add_to_list, Name, Value}).
 
 %%%----------------------------------------------------------------------
 %%% Callback functions from gen_server
 %%%----------------------------------------------------------------------
-
-%%----------------------------------------------------------------------
-%% Func: init/1
-%% Returns: {ok, State}          |
-%%          {ok, State, Timeout} |
-%%          ignore               |
-%%          {stop, Reason}
-%%----------------------------------------------------------------------
 init([]) ->
-    Filename = filename:join(os:getenv("HOME"), "edit_var.dets"),
-    Ets = ets:new(edit_mem_var, [set, public, named_table]),
-    {ok, Dets} = dets:open_file(edit_disk_var, [{type, set}, {file, Filename}]),
-    load_file(Dets, Ets),
-    State = #state{ets = Ets, dets = Dets},
+    ?TABLE = ets:new(?TABLE, [set, public, named_table]),
+    {ok, undefined}.
 
-    {ok, State}.
-
-%%----------------------------------------------------------------------
-%% Func: handle_call/3
-%% Returns: {reply, Reply, State}          |
-%%          {reply, Reply, State, Timeout} |
-%%          {noreply, State}               |
-%%          {noreply, State, Timeout}      |
-%%          {stop, Reason, Reply, State}   | (terminate/2 is called)
-%%          {stop, Reason, State}            (terminate/2 is called)
-%%----------------------------------------------------------------------
-handle_call({lookup, Name, Default}, From, State) ->
-    {reply, do_lookup(State, Name, Default), State};
-
-handle_call({set, Name, Value}, From, State) ->
-    ets:insert(State#state.ets, {Name, Value}),
-    case is_permanent(State, Name) of
-	true ->
-	    dets:insert(State#state.dets, {Name, Value});
-	false ->
-	    ok
-    end,
+handle_call({set, Name, Value}, _From, State) ->
+    ets:insert(?TABLE, {Name, Value}),
     {reply, ok, State};
 
-handle_call({permanent, Name, Flag}, From, State) ->
-    case Flag of
-	false ->
-	    dets:delete(State#state.dets, Name);
-	true ->
-	    dets:insert(State#state.dets, {Name, do_lookup(State, Name)})
-    end,
-    {reply, ok, State}.
-
-%%----------------------------------------------------------------------
-%% Func: handle_cast/2
-%% Returns: {noreply, State}          |
-%%          {noreply, State, Timeout} |
-%%          {stop, Reason, State}            (terminate/2 is called)
-%%----------------------------------------------------------------------
-handle_cast(Msg, State) ->
-    {noreply, State}.
-
-%%----------------------------------------------------------------------
-%% Func: handle_info/2
-%% Returns: {noreply, State}          |
-%%          {noreply, State, Timeout} |
-%%          {stop, Reason, State}            (terminate/2 is called)
-%%----------------------------------------------------------------------
-handle_info(Info, State) ->
-    {noreply, State}.
-
-%%----------------------------------------------------------------------
-%% Func: terminate/2
-%% Purpose: Shutdown the server
-%% Returns: any (ignored by gen_server)
-%%----------------------------------------------------------------------
-terminate(Reason, State) ->
-    ok.
-
-%%----------------------------------------------------------------------
-%% Func: code_change/3
-%% Purpose: Convert process state when code is changed
-%% Returns: {ok, NewState}
-%%----------------------------------------------------------------------
-code_change(OldVsn, State, Extra) ->
-    {ok, State}.
-
-%%%----------------------------------------------------------------------
-%%% Internal functions
-%%%----------------------------------------------------------------------
-
-load_file(Dets, Ets) ->
-    F = fun(X) -> ets:insert(Ets, X) end,
-    dets:traverse(Dets, F).
-
-do_lookup(State, Name) ->
-    do_lookup(State, Name, undefined).
-
-do_lookup(State, Name, Default) ->
-    case ets:lookup(State#state.ets, Name) of
-	[{_, Value}] ->
-	    Value;
-	[] ->
-	    Default
+handle_call({add_to_list, Name, Value}, _From, State) ->
+    case ets:lookup(?TABLE, Name) of
+        [{_, List}] when is_list(List) ->
+            ets:insert(?TABLE, {Name, include(List, Value)}),
+            {reply, ok, State};
+        [{_, _NonList}] ->
+            {reply, {error, bad_type}, State};
+        [] ->
+            ets:insert(?TABLE, {Name, [Value]}),
+            {reply, ok, State}
     end.
 
-is_permanent(State, Name) ->
-    case dets:lookup(State#state.dets, Name) of
-	[] ->
-	    false;
-	_ ->
-	    true
-    end.
+handle_cast(_Msg, State)  -> {noreply, State}.
+handle_info(_Info, State) -> {noreply, State}.
+terminate(_Reason, _State) -> ok.
+code_change(_OldVsn, State, _Extra) -> {ok, State}.
+
+include([], Value)        -> [Value];
+include([Value|T], Value) -> [Value|T];
+include([H|T], Value)     -> [H|include(T, Value)].
