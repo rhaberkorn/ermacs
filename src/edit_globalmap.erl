@@ -1,12 +1,4 @@
-%%%----------------------------------------------------------------------
-%%% File    : edit_globalmap.erl
-%%% Author  : Luke Gorrie <luke@bluetail.com>
-%%% Purpose : Global keymap
-%%% Created : 23 Sep 2000 by Luke Gorrie <luke@bluetail.com>
-%%%----------------------------------------------------------------------
-
 -module(edit_globalmap).
--author('luke@bluetail.com').
 
 -export([init/0]).
 

@@ -1,14 +1,6 @@
-%%%----------------------------------------------------------------------
-%%% File    : edit_file.erl
-%%% Author  : Luke Gorrie <luke@bluetail.com>
-%%% Purpose : file-related editor commands
-%%% Created : 14 Jan 2001 by Luke Gorrie <luke@bluetail.com>
-%%%----------------------------------------------------------------------
-
 -module(edit_file).
--author('luke@bluetail.com').
 
--include_lib("ermacs/include/edit.hrl").
+-include("edit.hrl").
 
 -compile(export_all).
 -compile({parse_transform, edit_transform}).
@@ -85,11 +77,9 @@ auto_set_mode(State) ->
 auto_set_mode(State, Filename, []) ->
     State;
 auto_set_mode(State, Filename, [{RE, {Mod, Fun}}|T]) ->
-    case regexp:match(Filename, RE) of
+    case re:run(Filename, RE, [{capture,none}]) of
 	nomatch ->
 	    auto_set_mode(State, Filename, T);
-	{match, _, _} ->
+	match ->
 	    Mod:Fun(State)
     end.
-
-

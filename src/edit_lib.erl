@@ -1,17 +1,11 @@
 -module(edit_lib).
--author('tobbe@serc.rmit.edu.au').
-%%----------------------------------------------------------------------
-%% Created : 15 Jun 1998 by tobbe@serc.rmit.edu.au
-%% Function: Core library routines for the Edit editor.
-%%----------------------------------------------------------------------
--vc('$Id$ ').
 
--include_lib("ermacs/include/edit.hrl").
+-include("edit.hrl").
 
 -compile(export_all).
 -compile({parse_transform, edit_transform}).
 
-self_insert_command(S,Ch) when record(S,state) ->
+self_insert_command(S,Ch) when is_record(S,state) ->
     insert_char(S,Ch).
 
 delete_char_backward(S) ->
@@ -67,7 +61,7 @@ abort(S) ->
 %% -----------------------------------
 %% Move cursor vertically down 1 line.
 
-next_line(S) when record(S,state) ->
+next_line(S) when is_record(S,state) ->
     Buf = buffer(S),
     NewWindow = update_goal(S, Buf),
     Goal = NewWindow#window.goal_column,
@@ -82,7 +76,7 @@ next_line(S) when record(S,state) ->
 	    S#state{curwin=NewWindow}
     end.
 
-previous_line(S) when record(S,state) ->
+previous_line(S) when is_record(S,state) ->
     Buf = buffer(S),
     NewWindow = update_goal(S, Buf),
     Goal = NewWindow#window.goal_column,
@@ -141,7 +135,7 @@ point(Buf) ->
 %% ----------------------------
 %% Move point left 1 character.
 
-backward_char(S) when record(S,state) ->
+backward_char(S) when is_record(S,state) ->
     Buf = buffer(S),
     Pos = edit_buf:mark_pos(Buf, point) - 1,
     case Pos < 1 of
@@ -155,7 +149,7 @@ backward_char(S) when record(S,state) ->
 %% Move point right 1 character.
 %% 
 
-forward_char(S) when record(S,state) ->
+forward_char(S) when is_record(S,state) ->
     Buf = buffer(S),
     Pos = edit_buf:mark_pos(Buf, point) + 1,
     Max = edit_buf:point_max(Buf),
@@ -202,7 +196,7 @@ beginning_of_line_pos(Buf, Pos) ->
     %% We start before the point, incase we're on a newline
     case find_char_backward(Buf, const_P($\n), Pos - 1) of
 	not_found -> 1;			% point_min
-	N when integer(N) -> N + 1	% we want to be just after the newline
+	N when is_integer(N) -> N + 1	% we want to be just after the newline
     end.
 
 move_to_char_backward(Buf, Pred) ->
@@ -220,7 +214,7 @@ find_char_backward(Buf, Pred, Pos, Default) ->
 				 Pos) of
 	not_found ->
 	    Default;
-	P when integer(P) ->
+	P when is_integer(P) ->
 	    P
     end.
 
@@ -257,7 +251,7 @@ end_of_line_pos(Buf, Pos) ->
     P = case find_char_forward(Buf, fun(C) -> C == $\n end, Pos) of
 	    not_found ->
 		edit_buf:point_max(Buf);
-	    N when integer(N) ->
+	    N when is_integer(N) ->
 		N
 	end.
 
@@ -276,7 +270,7 @@ find_char_forward(Buf, Pred, Pos, Default) ->
 			       Pos) of
 	not_found ->
 	    Default;
-	P when integer(P) ->
+	P when is_integer(P) ->
 	    P
     end.
 
@@ -316,7 +310,7 @@ scroll_up(State) ->
 	case find_nth(Buf, backward, DStart, $\n, Height - 1) of
 	    not_found ->
 		1;
-	    X when integer(X) ->
+	    X when is_integer(X) ->
 		X + 1
 	end,
     DEnd = case find_nth(Buf, forward, NewDStart, $\n, Height) of
@@ -340,7 +334,7 @@ scroll_down(State) ->
     DStart = edit_buf:mark_pos(Buf, Win#window.start_mark),
     PMax = edit_buf:point_max(Buf),
     case find_nth(Buf, forward, DStart, $\n, edit_window:text_lines(Win)-2) of
-	X when integer(X),
+	X when is_integer(X),
 	       X < PMax ->
 	    %% We want to be just after the newline - i.e. start of next line
 	    Pos = X + 1,
@@ -365,7 +359,7 @@ scroll_down_wrap(Win) ->
     PMax = edit_buf:point_max(Buf),
     Lines = edit_window:text_lines(Win),
     Pos = case find_nth(Buf, forward, DStart, $\n, Lines) of
-	      X when integer(X),
+	      X when is_integer(X),
 		     X < PMax ->
 		  %% We want to be just after the newline - i.e. start
 		  %% of next line
@@ -633,7 +627,7 @@ kill_buffer(State, Name) ->
 	    State;
 	Buffers ->
             case whereis(BufferName) of
-                Pid when pid(Pid) ->
+                Pid when is_pid(Pid) ->
                     edit_buf:kill(BufferName),
 		    NewBuffers = Buffers -- [BufferName],
 		    F = fun(Win) ->
@@ -652,12 +646,6 @@ kill_buffer(State, Name) ->
 		    edit_util:status_msg(State, "No such buffer: ~s", [Name])
 	    end
     end.
-
-min(X,Y) when X<Y -> X;
-min(_,Y)          -> Y.
-
-max(X,Y) when X>Y -> X;
-max(_,Y)          -> Y.
 
 %% Get the buffer from state - blocks if it's being borrowed by someone else.
 buffer(State) ->

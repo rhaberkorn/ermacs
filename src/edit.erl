@@ -1,16 +1,7 @@
-%%%----------------------------------------------------------------------
-%%% File    : edit.erl
-%%% Author  : Luke Gorrie <luke@bluetail.com>
-%%% Purpose : Main editor process.
-%%%
-%%% Grown out of Tobbe's 'edit' program, and slowly rewritten.
-%%%----------------------------------------------------------------------
 -module(edit).
--author('luke@bluetail.com').
 -export([start/0]).
 
--include_lib("ermacs/include/edit.hrl").
-
+-include("edit.hrl").
 -compile(export_all).
 
 %% Command-line entry function. Starts the editor.
@@ -23,12 +14,7 @@ start(Args) ->
     %% Easy/hacky way - asynchronously ask that all the files be
     %% loaded. When this process is initialised it'll see the
     %% messages.
-    Filenames = lists:map(fun(X) -> atom_to_list(X) end,
-			  Args),
-    lists:foreach(fun(Filename) ->
-			  self() ! {invoke, {edit_file, find_file, [Filename]}}
-		  end,
-		  Filenames),
+    lists:foreach(fun(Filename) -> self() ! {invoke, {edit_file, find_file, [Filename]}} end, Args),
     start().
 
 %% Another command-line entry function. Starts the editor with some
@@ -164,7 +150,7 @@ dispatch(State) ->
     receive
 	{invoke, {M, F, A}} ->
 	    dispatch_proc(State, fun() -> apply(M, F, [State | A]) end);
-	{invoke, Fun} when function(Fun) ->
+	{invoke, Fun} when is_function(Fun) ->
 	    dispatch_proc(State, fun() -> Fun(State) end);
 	{invoke_extended, {Mod, Func, Args}} ->
 	    dispatch_extended(State, Mod, Func, Args);
@@ -260,5 +246,3 @@ analyse_loop(Procs) ->
 		    eprof:total_analyse()
 	    end,
     analyse_loop(Procs).
-
-

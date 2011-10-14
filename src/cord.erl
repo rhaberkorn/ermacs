@@ -1,10 +1,3 @@
-%%%----------------------------------------------------------------------
-%%% File    : cord.erl
-%%% Author  : Luke Gorrie <luke@bluetail.com>
-%%% Purpose : Data structure for large strings of text
-%%% Created : 21 Oct 2000 by Luke Gorrie <luke@bluetail.com>
-%%%----------------------------------------------------------------------
-%%
 %% Cords - a scalable data structure for strings of text.
 %%
 %% Cords are binary trees with erlang binaries as leaves. The trees
@@ -40,7 +33,6 @@
 %%     {result, R}.
 
 -module(cord).
--author('luke@bluetail.com').
 
 -compile(export_all).
 
@@ -75,8 +67,8 @@
 
 new() -> <<>>.
 
-new(B) when binary(B) -> fix_cord(B);
-new(L) when list(L)   -> new(list_to_binary(L)).
+new(B) when is_binary(B) -> fix_cord(B);
+new(L) when is_list(L)   -> new(list_to_binary(L)).
 
 %% More efficient way to create a cord from a file. This
 %% implementation is not terribly clever (read small chunks, balance
@@ -112,18 +104,18 @@ make_cord(Left, Right) ->
 	  right=Right,
 	  dirty=true}.
 
-cord_size(Cord) when binary(Cord) ->
+cord_size(Cord) when is_binary(Cord) ->
     size(Cord);
-cord_size(Cord) when record(Cord, cord) ->
+cord_size(Cord = #cord{}) ->
     Cord#cord.size.
 
-max_depth(Cord) when binary(Cord) ->
+max_depth(Cord) when is_binary(Cord) ->
     1;
 max_depth(Cord) ->
     1 + max(max_depth(Cord#cord.left),
 	    max_depth(Cord#cord.right)).
 
-nr_nodes(Cord) when binary(Cord) ->
+nr_nodes(Cord) when is_binary(Cord) ->
     1;
 nr_nodes(Cord) ->
     1 + nr_nodes(Cord#cord.left) + nr_nodes(Cord#cord.right).
@@ -135,13 +127,10 @@ mean_leaf_size(Cord) ->
 		      Sizes),
     round(Sum / length(Sizes)).
 
-leaf_sizes(Cord) when binary(Cord) ->
+leaf_sizes(Cord) when is_binary(Cord) ->
     [size(Cord)];
 leaf_sizes(Cord) ->
     leaf_sizes(Cord#cord.left) ++ leaf_sizes(Cord#cord.right).
-
-max(X, Y) when X > Y -> X;
-max(X, Y)            -> Y.
 
 insert(Cord, New, Point) ->
     replace(Cord, New, Point, 0).
@@ -151,7 +140,7 @@ delete(Cord, Point, Length) ->
 
 %% replace/4: Replace a region of the cord. `New' is the text to
 %% replace the region with, and can be either a list, binary, or cord.
-replace(Cord, New, Start, Length) when list(New) ->
+replace(Cord, New, Start, Length) when is_list(New) ->
     replace(Cord, list_to_binary(New), Start, Length);
 replace(Cord, New, Start, Length) ->
     %% Replace is done by copying the areas on the left and right of
@@ -161,14 +150,14 @@ replace(Cord, New, Start, Length) ->
     {C, D} = split(B, Length),
     fix_cord(make_cord(make_cord(A, New), D)).
 
-split(Cord, 0) when binary(Cord) ->
+split(Cord, 0) when is_binary(Cord) ->
     {<<>>, Cord};
-split(Cord, Pos) when binary(Cord) ->
+split(Cord, Pos) when is_binary(Cord) ->
     ?assert(Pos =< cord_size(Cord)),
     <<Left:Pos/binary, Right/binary>> = Cord,
     {Left, Right};
 
-split(Cord, Pos) when record(Cord, cord) ->
+split(Cord = #cord{}, Pos) ->
     ?assert(Pos =< cord_size(Cord)),
     LeftSz = cord_size(Cord#cord.left),
     RightSz = cord_size(Cord#cord.right),
@@ -184,7 +173,7 @@ split(Cord, Pos) when record(Cord, cord) ->
     end.
 
 %% join two cords together and rebalance.
-join(Left, Right) when binary(Left) ->
+join(Left, Right) when is_binary(Left) ->
     fix_cord(make_cord(Left, Right)).
 
 %% fix_cord/1
@@ -193,7 +182,7 @@ join(Left, Right) when binary(Left) ->
 %% reasonable sizes.
 
 %% Leaf (binary) - break it up if it's too big
-fix_cord(Bin) when binary(Bin) ->
+fix_cord(Bin) when is_binary(Bin) ->
     if size(Bin) > ?MAX_SIZE ->
 	    {Left, Right} = split(Bin, round(size(Bin) / 2)),
 	    fix_cord(make_cord(Left, Right));
@@ -204,7 +193,7 @@ fix_cord(Cord) when Cord#cord.dirty == false ->
     Cord;
 %% Branch (cord) - merge its children if they're too small, balance it
 %% if it's too unbalanced.
-fix_cord(Cord) when record(Cord, cord) ->
+fix_cord(Cord = #cord{}) ->
     Sz = cord_size(Cord),
     Left = Cord#cord.left,
     Right = Cord#cord.right,
@@ -217,13 +206,13 @@ fix_cord(Cord) when record(Cord, cord) ->
        SzDiff > (Sz/3) ->
 	    %% needs rebalancing
 	    if LeftSz > RightSz ->
-		    if binary(Left) ->
+		    if is_binary(Left) ->
 			    fix_cord(to_binary(Cord));
 		       true ->
 			    balance_from_left(Cord)
 		    end;
 	       LeftSz =< RightSz ->
-		    if binary(Right) ->
+		    if is_binary(Right) ->
 			    fix_cord(to_binary(Cord));
 		       true ->
 			    balance_from_right(Cord)
@@ -238,7 +227,7 @@ fix_cord(Cord) when record(Cord, cord) ->
 
 %% Balance by taking from the left side.
 %% Left must be a #cord, right can be a binary.
-balance_from_left(#cord{left=Left, right=Right}) when record(Left, cord) ->
+balance_from_left(#cord{left = Left, right = Right}) when is_record(Left, cord) ->
     LLSz = cord_size(Left#cord.left),
     LRSz = cord_size(Left#cord.right),
     if
@@ -247,7 +236,7 @@ balance_from_left(#cord{left=Left, right=Right}) when record(Left, cord) ->
 	    fix_cord(make_cord(Left#cord.left,
 			       make_cord(Left#cord.right,
 					 Right)));
-	record(Left#cord.right, cord) ->
+	is_record(Left#cord.right, cord) ->
 	    %% double rotate
 	    LeftRight = Left#cord.right,
 	    fix_cord(make_cord(make_cord(Left#cord.left,
@@ -260,7 +249,7 @@ balance_from_left(#cord{left=Left, right=Right}) when record(Left, cord) ->
 
 %% oh, pain, duplication. never have been good at taking redundancy
 %% out of symmetric functions. -luke
-balance_from_right(#cord{left=Left, right=Right}) when record(Right, cord) ->
+balance_from_right(#cord{left = Left, right = Right}) when is_record(Right, cord) ->
     RLSz = cord_size(Right#cord.left),
     RRSz = cord_size(Right#cord.right),
     if
@@ -269,7 +258,7 @@ balance_from_right(#cord{left=Left, right=Right}) when record(Right, cord) ->
 	    fix_cord(make_cord(make_cord(Left,
 					 Right#cord.left),
 			       Right#cord.right));
-	record(Right#cord.left, cord) ->
+	is_record(Right#cord.left, cord) ->
 	    %% double rotate
 	    RightLeft = Right#cord.left,
 	    fix_cord(make_cord(make_cord(Left,
@@ -294,20 +283,20 @@ region_binary(Cord, Start, Length) ->
 region_list(Cord, Start, Length) ->
     binary_to_list(region_binary(Cord, Start, Length)).
 
-to_binary(Cord) when binary(Cord) ->
+to_binary(Cord) when is_binary(Cord) ->
     Cord;
 to_binary(Cord) ->
-    list_to_binary(to_binary1(Cord)).
+    to_binary1(Cord).
 
-to_binary1(Cord) when binary(Cord) ->
+to_binary1(Cord) when is_binary(Cord) ->
     Cord;
-to_binary1(Cord) when record(Cord, cord) ->
-    [to_binary1(Cord#cord.left),to_binary1(Cord#cord.right)].
+to_binary1(Cord = #cord{left = Left, right = Right}) ->
+    <<(to_binary1(Left))/binary, (to_binary1(Right))/binary>>.
 
 to_list(Cord) ->
     binary_to_list(to_binary(Cord)).
 
-to_iolist(Cord) when binary(Cord) ->
+to_iolist(Cord) when is_binary(Cord) ->
     [Cord];
 to_iolist(Cord) ->
     [to_iolist(Cord#cord.left) | to_iolist(Cord#cord.right)].
@@ -335,7 +324,7 @@ walk(Cord, Pos, Direction, F) ->
 
 walk1(<<>>, Direction, F) ->
     {more, F};
-walk1(Bin, Direction, F) when binary(Bin) ->
+walk1(Bin, Direction, F) when is_binary(Bin) ->
     {Chunk, Char} = case Direction of
 			backward ->
 			    Sz = size(Bin) - 1,
@@ -351,7 +340,7 @@ walk1(Bin, Direction, F) when binary(Bin) ->
 	{result, R} ->
 	    {result, R}
     end;
-walk1(Cord, Direction, F) when record(Cord, cord) ->
+walk1(Cord, Direction, F) when is_record(Cord, cord) ->
     {First, Second} = case Direction of
 			  backward ->
 			      {Cord#cord.right, Cord#cord.left};
@@ -371,7 +360,7 @@ walker(Cord) ->
 walker(Cord, Direction) ->
     walker(Cord, Direction, <<>>).
 
-walker(Cord, Direction, More) when binary(Cord) ->
+walker(Cord, Direction, More) when is_binary(Cord) ->
     {Cord, Direction, More};
 walker(Cord, forward, More) ->
     walker(Cord#cord.left, forward, make_cord(Cord#cord.right, More));
@@ -500,5 +489,3 @@ split_with_each(Cord, [H|T], L, N) ->
     split_with_each(Cord, T, L, N);
 split_with_each(Cord, [], L, N) ->
     split_with_each(Cord, L, L, N-1).
-
-

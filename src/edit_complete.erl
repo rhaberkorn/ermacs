@@ -1,18 +1,9 @@
-%%%----------------------------------------------------------------------
-%%% File    : edit_complete.erl
-%%% Author  : Luke Gorrie <luke@bluetail.com>
-%%% Purpose : Minibuffer completion.
-%%% Created : 26 Mar 2001 by Luke Gorrie <luke@bluetail.com>
-%%%----------------------------------------------------------------------
-
 -module(edit_complete).
--author('luke@bluetail.com').
 
--include_lib("ermacs/include/edit.hrl").
+-include("edit.hrl").
 -include_lib("kernel/include/file.hrl").
 
 -compile(export_all).
-%%-export([Function/Arity, ...]).
 
 -import(edit_lib, [buffer/1]).
 

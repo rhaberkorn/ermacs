@@ -1,14 +1,6 @@
-%%%----------------------------------------------------------------------
-%%% File    : edit_window.erl
-%%% Author  : Luke Gorrie <luke@bluetail.com>
-%%% Purpose : Window handling functions
-%%% Created : 14 Oct 2000 by Luke Gorrie <luke@bluetail.com>
-%%%----------------------------------------------------------------------
-
 -module(edit_window).
--author('luke@bluetail.com').
 
--include_lib("ermacs/include/edit.hrl").
+-include("edit.hrl").
 
 -compile(export_all).
 %%-export([Function/Arity, ...]).
@@ -39,7 +31,7 @@ width(W) ->
 %% the window knows where it's up to.
 attach(Window, Buffer) ->
     attach(Window, Buffer, 1).
-attach(Window, Buffer, Start) ->
+attach(Window, Buffer, _Start) ->
     edit_buf:add_mark(Buffer, Window#window.start_mark, 1, backward),
     Window#window{buffer=Buffer}.
 

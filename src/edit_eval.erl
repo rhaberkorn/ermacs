@@ -1,14 +1,5 @@
-%%%----------------------------------------------------------------------
-%%% File    : edit_eval.erl
-%%% Author  : Luke Gorrie <luke@bluetail.com>
-%%% Purpose : Erlang code evaluation
-%%% Created : 21 Jan 2001 by Luke Gorrie <luke@bluetail.com>
-%%%----------------------------------------------------------------------
-
 -module(edit_eval).
--author('luke@bluetail.com').
-
--include_lib("ermacs/include/edit.hrl").
+-include("edit.hrl").
 
 -compile({parse_transform, edit_transform}).
 
@@ -178,13 +169,16 @@ find_start(Buf) ->
 	not_found ->
 	    1;
 	X ->
-	    edit_lib:min(X + length(?PROMPT), edit_buf:point_max(Buf))
+	    min(X + length(?PROMPT), edit_buf:point_max(Buf))
     end.
 
 %% local_func(Function, Args, Bindings, Shell) ->
 %%	{value,Val,Bs}
 %%  Evaluate local functions, including shell commands.
 
+local_func(F, As0, Bs0, Buf) when is_function(F) ->
+    {As,Bs} = erl_eval:expr_list(As0, Bs0, {eval,{?MODULE,local_func},[Buf]}),
+    {value, apply(F, As),Bs};
 local_func(F, As0, Bs0, Buf) ->
     {As,Bs} = erl_eval:expr_list(As0, Bs0, {eval,{?MODULE,local_func},[Buf]}),
     case erlang:function_exported(user_default, F, length(As)) of
@@ -192,11 +186,7 @@ local_func(F, As0, Bs0, Buf) ->
 	    {value,apply(user_default, F, As),Bs};
 	false ->
 	    {value,apply(shell_default, F, As),Bs}
-    end;
-local_func(F, As0, Bs0, Buf) ->
-    {As,Bs} = erl_eval:expr_list(As0, Bs0, {eval,{?MODULE,local_func},[Buf]}),
-    {value,apply(F, As),Bs}.
-    
+    end.
 
 %% ----------------------------------------------------------------------
 %% Evaluation server API

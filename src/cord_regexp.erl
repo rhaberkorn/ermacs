@@ -1,12 +1,4 @@
-%%%----------------------------------------------------------------------
-%%% File    : cord_regexp.erl
-%%% Author  : Luke Gorrie <luke@bluetail.com>
-%%% Purpose : Regexp ops on cords
-%%% Created : 10 Mar 2001 by Luke Gorrie <luke@bluetail.com>
-%%%----------------------------------------------------------------------
-
 -module(cord_regexp).
--author('luke@bluetail.com').
 
 -compile(export_all).
 %%-export([Function/Arity, ...]).
@@ -59,7 +51,7 @@ continue_match(RE, {W, N}) ->
 	    X
     end.
 
-first_match1(RE, W, Pos) when list(RE) ->
+first_match1(RE, W, Pos) when is_list(RE) ->
     case regexp:parse(RE) of
 	{ok, REP} ->
 	    first_match1(optimise(REP), W, Pos);
@@ -111,20 +103,11 @@ re_apply(eos, More, done, P, C) ->
     end;
 re_apply(eos, More, $\n, P, C) ->
     re_apply_more(More, P, push($\n, C)); % \n isn't consumed
-re_apply(eos, More, done, P, C) ->
-    case cord:walker_direction(C) of
-	forward  -> re_apply_more(More, P, C);
-	backward -> nomatch
-    end;
 re_apply(bos, More, done, P, C) ->
     case cord:walker_direction(C) of
 	forward  -> nomatch;
 	backward -> re_apply_more(More, P, C)
     end;
-re_apply(eos, _, done, _, _) ->
-    true;
-re_apply(eos, _, done, _, _) ->
-    true;
 re_apply({'or', RE1, RE2}, More, Ch, P, C) ->
     re_apply_or({apply, RE1, More, Ch, P, C},
 		{apply, RE2, More, Ch, P, C});
@@ -155,7 +138,7 @@ re_apply({comp_class, Cc}, More, Ch, P, C) ->
 	true  -> nomatch;
 	false -> re_apply_more(More, advance(P, C), C)
     end;
-re_apply(Ch, More, Ch, P, C) when integer(Ch) ->
+re_apply(Ch, More, Ch, P, C) when is_integer(Ch) ->
     re_apply_more(More, advance(P, C), C);
 re_apply(_, _, _, _, _) ->
     nomatch.

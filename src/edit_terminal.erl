@@ -1,12 +1,4 @@
-%%%----------------------------------------------------------------------
-%%% File    : edit_terminal.erl
-%%% Author  : Luke Gorrie <luke@bluetail.com>
-%%% Purpose : ncurses terminal implementation
-%%% Created : 16 Sep 2000 by Luke Gorrie <luke@bluetail.com>
-%%%----------------------------------------------------------------------
-
 -module(edit_terminal).
--author('luke@bluetail.com').
 
 -include_lib("slang/include/slang.hrl").
 

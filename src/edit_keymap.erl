@@ -1,12 +1,4 @@
-%%%----------------------------------------------------------------------
-%%% File    : edit_keymap.erl
-%%% Author  : Luke Gorrie <luke@bluetail.com>
-%%% Purpose : Keymap implemented as an ETS table
-%%% Created : 23 Sep 2000 by Luke Gorrie <luke@bluetail.com>
-%%%----------------------------------------------------------------------
-
 -module(edit_keymap).
--author('luke@bluetail.com').
 
 -export([start_link_server/0, new/1, keymap_exists/1,
 	 global_set_key/2, set_key/3,
@@ -16,7 +8,7 @@
 
 start_link_server() ->
     case whereis(?MODULE) of
-        Pid when pid(Pid) ->
+        Pid when is_pid(Pid) ->
             {error, {already_started, Pid}};
         undefined ->
             Pid = spawn_link(?MODULE, server, []),

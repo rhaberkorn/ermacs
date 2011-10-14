@@ -1,14 +1,6 @@
-%%%----------------------------------------------------------------------
-%%% File    : edit_extended.erl
-%%% Author  : Luke Gorrie <luke@bluetail.com>
-%%% Purpose : execute-extended-command (emacs lingo)
-%%% Created : 14 Jan 2001 by Luke Gorrie <luke@bluetail.com>
-%%%----------------------------------------------------------------------
-
 -module(edit_extended).
--author('luke@bluetail.com').
 
--include_lib("ermacs/include/edit.hrl").
+-include("edit.hrl").
 
 -compile(export_all).
 -compile({parse_transform, edit_transform}).
@@ -20,7 +12,7 @@ extended_command(State, Mod, Func, Args) ->
 
 execute(State, Mod, Func, Args, []) ->
     case catch apply(Mod, Func, [State | Args]) of
-	S when record(S, state) ->
+	S when is_record(S, state) ->
 	    S;
 	{'EXIT', Rsn} ->
 	    io:format("** Crash: ~p~n", [Rsn]),
@@ -90,7 +82,7 @@ find_cmd_info(Mod, Func) ->
     case catch Mod:command_info() of
 	{'EXIT', _} ->
 	    {[], ""};
-	L when list(L) ->
+	L when is_list(L) ->
 	    case lists:keysearch(Func, 1, L) of
 		{value, {_, Params, Doc}} ->
 		    {Params, Doc};

@@ -1,0 +1,26 @@
+#!/bin/sh
+
+START_CWD=`pwd -P`
+
+SCRIPT=$0
+cd `dirname $SCRIPT`
+SCRIPT=`basename $SCRIPT`
+# Iterate down a (possible) chain of symlinks
+while [ -L "$SCRIPT" ]; do
+    SCRIPT=`readlink $SCRIPT`
+    cd `dirname $SCRIPT`
+    SCRIPT=`basename $SCRIPT`
+done
+
+PHYS_DIR=`pwd -P`
+EBIN="$PHYS_DIR/../ebin"
+MODS_EBIN="$PHYS_DIR/../mods/ebin"
+
+cd $START_CWD
+
+${ERL-erl} erl -pa ${EBIN}/ebin -pa ${MODS_EBIN} -noinput -noshell -nouser \
+               -run edit start $* \
+               2>/tmp/ermacs-misc.log
+
+# How do I get sh to run this in response to SIGINT?
+stty sane

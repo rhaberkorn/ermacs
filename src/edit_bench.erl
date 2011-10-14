@@ -1,10 +1,3 @@
-%%%-------------------------------------------------------------------
-%%% File    : edit_bench.erl
-%%% Author  : Luke Gorrie <luke@bluetail.com>
-%%% Purpose : Random benchmarking
-%%%
-%%% Created : 29 Sep 2001 by Luke Gorrie <luke@bluetail.com>
-%%%-------------------------------------------------------------------
 -module(edit_bench).
 
 -compile(export_all).
@@ -27,6 +20,3 @@ cord_bench_loop(Cord, Pid, N) when N > 0 ->
 cord_receiver() ->
     receive {cord, Who, Cord} -> Who ! ack end,
     cord_receiver().
-
-
-

@@ -1,12 +1,4 @@
-%%%----------------------------------------------------------------------
-%%% File    : edit_buf.erl
-%%% Author  : Luke Gorrie <luke@bluetail.com>
-%%% Purpose : Buffer process
-%%% Created : 14 Sep 2000 by Luke Gorrie <luke@bluetail.com>
-%%%----------------------------------------------------------------------
-
 -module(edit_buf).
--author('luke@bluetail.com').
 
 -compile(export_all).
 %%-export([Function/Arity, ...]).
@@ -32,7 +24,7 @@ new(Name) ->
 	    Err
     end.
 
-start_link(Name) when atom(Name) ->
+start_link(Name) when is_atom(Name) ->
     case whereis(Name) of
 	undefined ->
 	    Pid = proc_lib:spawn_link(?MODULE, init, [Name]),

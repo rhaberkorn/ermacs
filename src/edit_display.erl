@@ -1,14 +1,5 @@
-%%%----------------------------------------------------------------------
-%%% File    : edit_display.erl
-%%% Author  : Luke Gorrie <luke@bluetail.com>
-%%% Purpose : Editor display process: talks to curses
-%%% Created : 16 Sep 2000 by Luke Gorrie <luke@bluetail.com>
-%%%----------------------------------------------------------------------
-
 -module(edit_display).
--author('luke@bluetail.com').
-
--include_lib("ermacs/include/edit.hrl").
+-include("edit.hrl").
 
 -compile(export_all).
 %%-export([Function/Arity, ...]).
@@ -38,7 +29,7 @@ try_update(Window) ->
 	{X, Y} ->
 	    %% draw mode line
 	    draw_modeline(Window),
-	    TrimX = edit_lib:min(X, Window#window.width - 1),
+	    TrimX = min(X, Window#window.width - 1),
 	    ?EDIT_TERMINAL:move_to(TrimX, Y + Window#window.y),
 	    Window;
 	undefined ->
@@ -146,9 +137,6 @@ back_lines(_, N, Pos) ->
 
 dotimes(Fun, 0) ->
     true;
-dotimes(Fun, N) when integer(N), N > 0 ->
+dotimes(Fun, N) when is_integer(N), N > 0 ->
     Fun(),
     dotimes(Fun, N-1).
-
-min(X, Y) when X < Y -> X;
-min(X, Y)            -> Y.

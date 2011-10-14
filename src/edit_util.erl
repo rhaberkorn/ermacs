@@ -1,14 +1,6 @@
-%%%----------------------------------------------------------------------
-%%% File    : edit_util.erl
-%%% Author  : Luke Gorrie <luke@bluetail.com>
-%%% Purpose : Utility functions
-%%% Created : 15 Oct 2000 by Luke Gorrie <luke@bluetail.com>
-%%%----------------------------------------------------------------------
-
 -module(edit_util).
--author('luke@bluetail.com').
 
--include_lib("ermacs/include/edit.hrl").
+-include("edit.hrl").
 
 -export([keyname/1, status_msg/2, status_msg/3, update_minibuffer_window/2,
 	 select_window/2, update/3]).
@@ -209,11 +201,11 @@ spawn_with_init(Pid, Ref, Buffers, What) ->
     Pid ! {ready, Ref},
     spawn_with_apply(What),
     %% we miss this redraw if the command crashes. oops.
-    edit:invoke_later(?MODULE, redraw, []).
+    edit:invoke_async(?MODULE, redraw, []).
 
 spawn_with_apply({M, F, A}) ->
     apply(M, F, A);
-spawn_with_apply(Fun) when function(Fun) ->
+spawn_with_apply(Fun) when is_function(Fun) ->
     Fun().
 
 
@@ -223,9 +215,9 @@ redraw(State) ->
     State.
 
 %% Get the current working directory for the state or buffer.
-pwd(State) when record(State, state) ->
+pwd(State) when is_record(State, state) ->
     pwd((State#state.curwin)#window.buffer);
-pwd(Buf) when atom(Buf) ->
+pwd(Buf) when is_atom(Buf) ->
     case edit_buf:get_filename(Buf) of
 	undefined ->
 	    case file:get_cwd() of
@@ -242,4 +234,3 @@ pwd(Buf) when atom(Buf) ->
 	Filename ->
 	    filename:dirname(Filename)++"/"
     end.
-

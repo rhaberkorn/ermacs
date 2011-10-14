@@ -1,12 +1,4 @@
-%%%----------------------------------------------------------------------
-%%% File    : edit_mod.erl
-%%% Author  : Luke Gorrie <luke@bluetail.com>
-%%% Purpose : Module loader
-%%% Created : 28 Apr 2001 by Luke Gorrie <luke@bluetail.com>
-%%%----------------------------------------------------------------------
-
 -module(edit_mod).
--author('luke@bluetail.com').
 
 -export([init/0, require/1, load/1]).
 

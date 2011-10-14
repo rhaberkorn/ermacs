@@ -1,14 +1,6 @@
-%%%----------------------------------------------------------------------
-%%% File    : edit_history.erl
-%%% Author  : Luke Gorrie <luke@bluetail.com>
-%%% Purpose : Command history
-%%% Created : 24 Mar 2001 by Luke Gorrie <luke@bluetail.com>
-%%%----------------------------------------------------------------------
-
 -module(edit_history).
--author('luke@bluetail.com').
 
--include_lib("ermacs/include/edit.hrl").
+-include("edit.hrl").
 -compile({parse_transform, edit_transform}).
 -import(edit_lib, [buffer/1]).
 
@@ -80,8 +72,8 @@ search(State, BaseVar, RegionFn, Regexp) ->
 	    kill_old(Buf, RegionFn),
 	    edit_buf:insert(Buf, Cmd, edit_buf:mark_pos(Buf, point)),
 	    State;
-	{error, Err} ->
-	    edit_util:status_msg(State, "Error: " ++ regexp:format_error(Err));
+	{error, {ErrString, Position}} ->
+	    edit_util:status_msg(State, "Regex Error at " ++ integer_to_list(Position) ++ ": " ++ ErrString);
 	nomatch ->
 	    edit_util:status_msg(State, "Not found")
     end.
@@ -109,16 +101,22 @@ trim_history(Hist) when length(Hist) > ?HISTORY_MAX_LENGTH ->
 trim_history(Hist) ->
     Hist.
 
-find_match([], Regexp) ->
+find_match(Strings, Regexp) ->
+    case re:compile(Regexp) of
+        {ok, MP} ->
+            find_match1(Strings, MP);
+        {error, Error} ->
+            {error, Error}
+    end.
+
+find_match1([], _Regexp) ->
     nomatch;
-find_match([H|T], Regexp) ->
-    case regexp:match(H, Regexp) of
-	nomatch ->
-	    find_match(T, Regexp);
-	{match, _Start, _Length} ->
-	    {match, H};
-	{error, Err} ->
-	    {error, Err}
+find_match1([H|T], Regexp) ->
+    case re:run(H, Regexp) of
+        nomatch ->
+            find_match(T, Regexp);
+        match ->
+            {match, H}
     end.
 
 list_var(Base)  -> Base.

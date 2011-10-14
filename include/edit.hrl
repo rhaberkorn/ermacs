@@ -1,15 +1,6 @@
-%% -*- comment-column: 33 -*-
+-define(debug(F, A), io:format("[~s:~p] " ++ F, [?MODULE, ?LINE | A])).
 
--ifndef(_EDIT_HRL).
--define(_EDIT_HRL, true).
-
--define(debug(F, A),
-	io:format("[~s:~p] " ++ F, [?MODULE, ?LINE | A])
-       ).
-
-%% To use the GTK terminal, use the following definition.
-%% Requires that you have erlgtk and gterm in your path.
-%%-define(EDIT_TERMINAL, edit_terminal_gterm).
+%% TODO: remove
 -define(EDIT_TERMINAL, edit_terminal).
 
 -record(state,
@@ -44,5 +35,3 @@
 	       keymaps}).
 
 -define(EOL_CHAR, $$). % Character to indicate the line is chopped
-
--endif.

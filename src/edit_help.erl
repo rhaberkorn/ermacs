@@ -1,13 +1,5 @@
-%%%----------------------------------------------------------------------
-%%% File    : edit_help.erl
-%%% Author  : Luke Gorrie <luke@bluetail.com>
-%%% Purpose : Help-related functions
-%%% Created :  2 Feb 2002 by Luke Gorrie <luke@bluetail.com>
-%%%----------------------------------------------------------------------
-
 -module(edit_help).
-
--include_lib("ermacs/include/edit.hrl").
+-include("edit.hrl").
 
 -import(edit_lib, [buffer/1]).
 
@@ -37,7 +29,7 @@ find_source(S) ->
 	{Mod, Fun, Args} ->
 	    find_source(S, Mod, Fun);
 	_ ->
-	    edit_lib:status_msg(S, "Not bound to a function")
+	    edit_util:status_msg(S, "Not bound to a function")
     end.
 
 find_source(S0, Mod, Fun) ->
@@ -51,9 +43,9 @@ find_source(S0, Mod, Fun) ->
     end.
 
 guess_source_file(S0) ->
-    case regexp:sub(S0, "ebin", "src") of
+    case re:replace(S0, "ebin", "src", [{return, list}]) of
 	{ok, S1, _} ->
-	    case regexp:sub(S1, "beam", "erl") of
+        case re:replace(S1, "beam", "erl", [{return, list}]) of
 		{ok, S2, _} ->
 		    case file:read_file_info(S2) of
 			{ok, _} ->

@@ -1,20 +1,9 @@
-%%%----------------------------------------------------------------------
-%%% File    : edit_var.erl
-%%% Author  : Luke Gorrie <luke@bluetail.com>
-%%% Purpose : Variable management server - transient and persistent
-%%% Created : 21 Jan 2001 by Luke Gorrie <luke@bluetail.com>
-%%%----------------------------------------------------------------------
-
 %%% This module implements "setq"-like variables. But, this seems a bit
 %%% distasteful because of concurrent updates and so on. Maybe there is
 %%% better way to do variables in general (or just program-internal
 %%% variables).
 
 -module(edit_var).
--author('luke@bluetail.com').
-
-%%-compile(export_all).
-%%-export([Function/Arity, ...]).
 
 -behaviour(gen_server).
 
@@ -70,12 +59,10 @@ include([H|T], Value)     -> [H|include(T, Value)].
 init([]) ->
     Filename = filename:join(os:getenv("HOME"), "edit_var.dets"),
     Ets = ets:new(edit_mem_var, [set, public, named_table]),
-    {ok, Dets} = dets:open_file(edit_disk_var,
-				[{type, set},
-				 {file, Filename}]),
+    {ok, Dets} = dets:open_file(edit_disk_var, [{type, set}, {file, Filename}]),
     load_file(Dets, Ets),
-    State = #state{ets=Ets,
-		   dets=Dets},
+    State = #state{ets = Ets, dets = Dets},
+
     {ok, State}.
 
 %%----------------------------------------------------------------------

@@ -1,12 +1,4 @@
-%%%----------------------------------------------------------------------
-%%% File    : edit_text.erl
-%%% Author  : Luke Gorrie <luke@bluetail.com>
-%%% Purpose : Text data structure with markers and undo
-%%% Created :  2 Oct 2001 by Luke Gorrie <luke@bluetail.com>
-%%%----------------------------------------------------------------------
-
 -module(edit_text).
--author('luke@bluetail.com').
 
 -export([new/0, new/1, replace/4, add_mark/4, move_mark/3, mark_pos/2,
 	 undo/2, cord/1, walk_backward/3, walk_forward/3]).
@@ -21,7 +13,7 @@
 new() ->
     new(<<>>).
 
-new(BCS) when list(BCS) ->
+new(BCS) when is_list(BCS) ->
     new(cord:new(BCS));
 new(Cord) ->
     #text{cord=Cord}.
@@ -38,9 +30,9 @@ replace(Text0 = #text{cord=Cord0,marks=Marks0,undo=Undo0}, CBS, Start, Len) ->
     %% ...) - if that plays nicely with "running undo"
     Text0#text{cord=Cord1, marks=Marks1, undo=Undo1, running_undo=[]}.
 
-cbs_length(L) when list(L)   -> length(L);
-cbs_length(B) when binary(B) -> size(B);
-cbs_length(C)                -> cord:cord_size(C).
+cbs_length(L) when is_list(L)   -> length(L);
+cbs_length(B) when is_binary(B) -> size(B);
+cbs_length(C)                   -> cord:cord_size(C).
 
 update_marks(Marks, Start, End, Len) ->
     [update_mark(Mark,Start,End,Len) || Mark <- Marks].
@@ -88,7 +80,7 @@ mark_pos(#text{marks=Marks}, Name) ->
     {found, Mark} = find(fun(M) -> M#mark.name == Name end, Marks),
     Mark#mark.pos.
 
-find(Pred, []) ->
+find(_Pred, []) ->
     not_found;
 find(Pred, [H|T]) ->
     case Pred(H) of

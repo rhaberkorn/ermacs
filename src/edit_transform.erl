@@ -1,16 +1,9 @@
-%%%----------------------------------------------------------------------
-%%% File    : edit_transform.erl
-%%% Author  : Luke Gorrie <luke@bluetail.com>
-%%% Purpose : Parse transform module for editor command modules
-%%% Created : 25 Oct 2000 by Luke Gorrie <luke@bluetail.com>
-%%%----------------------------------------------------------------------
-
+%% Parse transform module for editor command modules
+%
 % -command({cmd1, [{name1, prompt1}], doc1}).
 % -command({cmd2, []}).
 
 -module(edit_transform).
--author('luke@bluetail.com').
-
 -export([parse_transform/2]).
 
 %% Collect "command" attributes to generate a command_info function. These
@@ -22,7 +15,7 @@
 %%
 %% command_info() returns [{Fun, [Arg], DocString}]
 %%
-parse_transform(Form, Opts) ->
+parse_transform(Form, _Opts) ->
     {Head, Rest} = split(Form),
     {Body, EOF} = splitlast(Rest),
     Line = element(2, hd(Body)),
@@ -56,7 +49,7 @@ scan_and_parse(Source, Line) ->
 %% 'module' attribute, Body is the rest.
 split(Form) ->
     split(Form, []).
-split([X = {attribute, Line, module, Module}|T], Acc) ->
+split([X = {attribute, _Line, module, _Module}|T], Acc) ->
     {lists:reverse([X|Acc]), T};
 split([H|T], Acc) ->
     split(T, [H|Acc]).
